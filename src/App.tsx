@@ -1,13 +1,37 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from './lib/supabase'
 import BookingForm from './components/BookingForm'
 import BookingTable from './components/BookingTable'
 import StatCards from './components/StatCards'
+import LoginPage from './components/LoginPage'
 
 type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인'
 
 export default function App() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('대시보드')
   const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user || null)
+      setLoading(false)
+    }
+
+    checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null)
+      }
+    )
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [])
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1)
@@ -18,12 +42,36 @@ export default function App() {
     setActiveTab('예약목록')
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">로딩 중...</div>
+  }
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => window.location.reload()} />
+  }
+
   const tabs: TabType[] = ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="py-8 px-4 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">예약 관리 허브</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">예약 관리 허브</h1>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">{user.email}</span>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 text-sm font-semibold"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
 
         {activeTab === '대시보드' && <StatCards refreshKey={refreshKey} />}
 
