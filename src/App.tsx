@@ -5,8 +5,9 @@ import BookingTable from './components/BookingTable'
 import StatCards from './components/StatCards'
 import LoginPage from './components/LoginPage'
 import ChatBox from './components/ChatBox'
+import MyBookings from './components/MyBookings'
 
-type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '채팅'
+type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '채팅' | '내 예약'
 
 const ADMIN_EMAIL = 'rellion48@gmail.com'
 
@@ -84,7 +85,7 @@ export default function App() {
 
   const tabs: TabType[] = isAdmin
     ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '채팅']
-    : ['예약목록', '예약추가', '채팅']
+    : ['예약추가', '내 예약', '채팅']
 
   if (!isAdmin && !tabs.includes(activeTab)) {
     setActiveTab('예약목록')
@@ -137,6 +138,13 @@ export default function App() {
 
         {activeTab === '채팅' && (
           <ChatBox userEmail={user.email} userName={user.user_metadata?.name || user.email} isAdmin={isAdmin} />
+        )}
+
+        {activeTab === '내 예약' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">내 예약 현황</h2>
+            <MyBookings userEmail={user.email} refreshKey={refreshKey} />
+          </div>
         )}
       </div>
 
