@@ -7,6 +7,8 @@ import LoginPage from './components/LoginPage'
 
 type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인'
 
+const ADMIN_EMAIL = 'rellion48@gmail.com'
+
 export default function App() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -47,6 +49,8 @@ export default function App() {
     setUser(null)
   }
 
+  const isAdmin = user?.email === ADMIN_EMAIL
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">로딩 중...</div>
   }
@@ -55,13 +59,39 @@ export default function App() {
     return <LoginPage />
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <div className="text-4xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold mb-4">접근 거부</h1>
+          <p className="text-gray-600 mb-6">
+            이 앱은 관리자만 접근할 수 있습니다.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            현재 로그인: {user.email}
+          </p>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold"
+          >
+            로그아웃
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const tabs: TabType[] = ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="py-8 px-4 max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">예약 관리 허브</h1>
+          <div>
+            <h1 className="text-3xl font-bold">예약 관리 허브</h1>
+            <p className="text-sm text-green-600 font-semibold mt-1">👤 관리자</p>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{user.email}</span>
             <button
