@@ -59,30 +59,13 @@ export default function App() {
     return <LoginPage />
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="text-4xl mb-4">🚫</div>
-          <h1 className="text-2xl font-bold mb-4">접근 거부</h1>
-          <p className="text-gray-600 mb-6">
-            이 앱은 관리자만 접근할 수 있습니다.
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            현재 로그인: {user.email}
-          </p>
-          <button
-            onClick={handleLogout}
-            className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold"
-          >
-            로그아웃
-          </button>
-        </div>
-      </div>
-    )
-  }
+  const tabs: TabType[] = isAdmin
+    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
+    : ['예약목록', '예약추가']
 
-  const tabs: TabType[] = ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
+  if (!isAdmin && !tabs.includes(activeTab)) {
+    setActiveTab('예약목록')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -106,7 +89,7 @@ export default function App() {
         {activeTab === '대시보드' && <StatCards refreshKey={refreshKey} />}
 
         {activeTab === '예약목록' && (
-          <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} />
+          <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} isAdmin={isAdmin} />
         )}
 
         {activeTab === '예약추가' && (
@@ -116,7 +99,7 @@ export default function App() {
         {activeTab === '상태관리' && (
           <div>
             <h2 className="text-2xl font-bold mb-4">상태 관리</h2>
-            <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} />
+            <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} isAdmin={isAdmin} />
           </div>
         )}
 
