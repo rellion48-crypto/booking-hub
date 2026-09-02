@@ -1,14 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface BookingFormProps {
   onSuccess: () => void
-}
-
-declare global {
-  interface Window {
-    kakao: any
-  }
 }
 
 export default function BookingForm({ onSuccess }: BookingFormProps) {
@@ -19,7 +13,6 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
   const [address, setAddress] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const mapRef = useRef<HTMLDivElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,48 +50,10 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
     }
   }
 
-  // Kakao Map rendering
-  useEffect(() => {
-    console.log('Map effect triggered. Address:', address)
-    console.log('Kakao SDK:', window.kakao ? 'loaded' : 'not loaded')
-    console.log('mapRef.current:', mapRef.current ? 'exists' : 'null')
-
-    if (!address || !mapRef.current || !window.kakao) {
-      console.log('Skipping map render - missing requirements')
-      return
-    }
-
-    try {
-      const container = mapRef.current
-      const options = {
-        center: new window.kakao.maps.LatLng(37.566826, 126.9786567),
-        level: 3,
-      }
-
-      const map = new window.kakao.maps.Map(container, options)
-      console.log('Map created successfully')
-
-      const geocoder = new window.kakao.maps.services.Geocoder()
-      geocoder.addressSearch(address, (result: any, status: any) => {
-        console.log('Geocoding result:', { result, status })
-        if (status === window.kakao.maps.services.Status.OK) {
-          const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
-          map.setCenter(coords)
-
-          new window.kakao.maps.Marker({
-            map: map,
-            position: coords,
-            title: address,
-          })
-          console.log('Marker added successfully')
-        } else {
-          console.error('Geocoding failed:', status)
-        }
-      })
-    } catch (error) {
-      console.error('Map rendering error:', error)
-    }
-  }, [address])
+  // Google Maps Embed URL
+  const mapEmbedUrl = address
+    ? `https://www.google.com/maps/embed/v1/place?q=${encodeURIComponent(address)}`
+    : ''
 
   return (
     <div className="space-y-6 mb-6">
@@ -157,14 +112,12 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
       {address && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-bold mb-4">위치 미리보기</h3>
-          <div
-            ref={mapRef}
-            style={{
-              width: '100%',
-              height: '400px',
-              borderRadius: '8px',
-              overflow: 'hidden',
-            }}
+          <iframe
+            width="100%"
+            height="400"
+            style={{ border: 0, borderRadius: '8px' }}
+            loading="lazy"
+            src={mapEmbedUrl}
           />
         </div>
       )}
