@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import KakaoAddressSearch from './KakaoAddressSearch'
 
 interface BookingFormProps {
   onSuccess: () => void
@@ -92,12 +91,14 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
           />
         </div>
 
-        <div className="mb-4">
-          <KakaoAddressSearch
-            initialValue={address}
-            onAddressSelect={(selectedAddress) => setAddress(selectedAddress)}
-          />
-        </div>
+        <input
+          type="text"
+          name="address"
+          placeholder="주소 (예: 강남역, 서울시 강남구)"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
+        />
 
         <button
           type="submit"

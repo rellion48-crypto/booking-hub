@@ -19,14 +19,6 @@ export default function KakaoAddressSearch({
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [showResults, setShowResults] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const apiKey = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY
-
-  // Initialize Kakao SDK
-  useEffect(() => {
-    if (window.kakao && !window.kakao.maps.services) {
-      window.kakao.init(apiKey)
-    }
-  }, [apiKey])
 
   // Handle search
   const handleSearch = (value: string) => {
@@ -38,20 +30,30 @@ export default function KakaoAddressSearch({
       return
     }
 
-    if (!window.kakao?.maps?.services?.Places) {
-      console.error('Kakao Maps API not loaded')
+    // Check if Kakao is loaded
+    if (!window.kakao) {
+      console.error('Kakao SDK not loaded yet')
       return
     }
 
-    const places = new window.kakao.maps.services.Places()
-    places.keywordSearch(value, (data: any, status: any) => {
-      if (status === window.kakao.maps.services.Status.OK) {
-        setSearchResults(data)
-        setShowResults(true)
-      } else {
-        setSearchResults([])
-      }
-    })
+    if (!window.kakao.maps?.services?.Places) {
+      console.error('Kakao Maps Services not available')
+      return
+    }
+
+    try {
+      const places = new window.kakao.maps.services.Places()
+      places.keywordSearch(value, (data: any, status: any) => {
+        if (status === window.kakao.maps.services.Status.OK) {
+          setSearchResults(data)
+          setShowResults(true)
+        } else {
+          setSearchResults([])
+        }
+      })
+    } catch (error) {
+      console.error('Search error:', error)
+    }
   }
 
   // Handle address selection
@@ -83,6 +85,8 @@ export default function KakaoAddressSearch({
       <input
         ref={searchInputRef}
         type="text"
+        name="address"
+        id="address-search"
         placeholder="주소 검색 (예: 강남역, 서울시 강남구)"
         value={searchInput}
         onChange={(e) => handleSearch(e.target.value)}
