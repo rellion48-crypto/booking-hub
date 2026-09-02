@@ -14,21 +14,37 @@ const ADMIN_EMAIL = 'rellion48@gmail.com'
 export default function App() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<TabType>('대시보드')
+  const [activeTab, setActiveTab] = useState<TabType>('예약추가')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
+      const currentUser = session?.user || null
+      setUser(currentUser)
       setLoading(false)
+
+      // Set initial tab based on user role
+      if (currentUser?.email === ADMIN_EMAIL) {
+        setActiveTab('대시보드')
+      } else {
+        setActiveTab('예약추가')
+      }
     }
 
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user || null)
+        const currentUser = session?.user || null
+        setUser(currentUser)
+
+        // Update tab based on role on auth change
+        if (currentUser?.email === ADMIN_EMAIL) {
+          setActiveTab('대시보드')
+        } else {
+          setActiveTab('예약추가')
+        }
       }
     )
 
@@ -64,10 +80,6 @@ export default function App() {
   const tabs: TabType[] = isAdmin
     ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '채팅']
     : ['예약추가', '내 예약', '채팅']
-
-  if (!isAdmin && !tabs.includes(activeTab)) {
-    setActiveTab('예약목록')
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
