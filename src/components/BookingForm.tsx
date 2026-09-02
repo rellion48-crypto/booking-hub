@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 
 interface BookingFormProps {
   onSuccess: () => void
+  userEmail: string
 }
 
 // Global function for map popup buttons
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-export default function BookingForm({ onSuccess }: BookingFormProps) {
+export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) {
   const [customer, setCustomer] = useState('')
   const [service, setService] = useState('')
   const [date, setDate] = useState('')
@@ -92,6 +93,7 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
         address,
         status: 'pending',
         via: 'form',
+        email: userEmail,
       })
 
     if (insertError) {

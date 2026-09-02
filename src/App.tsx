@@ -59,7 +59,11 @@ export default function App() {
 
   const handleFormSuccess = () => {
     handleRefresh()
-    setActiveTab('예약목록')
+    if (isAdmin) {
+      setActiveTab('예약목록')
+    } else {
+      setActiveTab('내 예약')
+    }
   }
 
   const handleLogout = async () => {
@@ -109,7 +113,7 @@ export default function App() {
         )}
 
         {activeTab === '예약추가' && (
-          <BookingForm onSuccess={handleFormSuccess} />
+          <BookingForm onSuccess={handleFormSuccess} userEmail={user.email} />
         )}
 
         {activeTab === '상태관리' && (
