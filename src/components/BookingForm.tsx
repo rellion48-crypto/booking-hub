@@ -50,8 +50,9 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
     }
   }
 
-  const mapEmbedUrl = address
-    ? `https://www.google.com/maps/embed/v1/place?key=REDACTED&q=${encodeURIComponent(address)}`
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  const mapEmbedUrl = address && apiKey
+    ? `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(address)}`
     : ''
 
   return (
