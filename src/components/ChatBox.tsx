@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface ChatMessage {
@@ -19,6 +19,7 @@ export default function ChatBox({ userEmail, userName, isAdmin }: ChatBoxProps) 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Get nickname
   const getNickname = (): string => {
@@ -28,6 +29,11 @@ export default function ChatBox({ userEmail, userName, isAdmin }: ChatBoxProps) 
     // Google 닉네임 앞 4글자 + ***
     const namePart = userName.substring(0, 4)
     return `${namePart}***`
+  }
+
+  // Scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   // Fetch messages
@@ -41,25 +47,40 @@ export default function ChatBox({ userEmail, userName, isAdmin }: ChatBoxProps) 
 
       if (!error) {
         setMessages(data || [])
+        setTimeout(scrollToBottom, 100)
       }
     }
 
     fetchMessages()
 
     // Subscribe to realtime updates
-    const subscription = supabase
-      .channel('chat_messages')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as ChatMessage])
+    const channel = supabase.channel('public:chat_messages', {
+      config: {
+        broadcast: { self: true }
+      }
+    })
+
+    channel
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        (payload: any) => {
+          console.log('Realtime update:', payload)
+          if (payload.eventType === 'INSERT') {
+            setMessages((prev) => [...prev, payload.new as ChatMessage])
+            setTimeout(scrollToBottom, 100)
+          }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Channel subscription status:', status)
+      })
 
     return () => {
-      subscription.unsubscribe()
+      channel.unsubscribe()
     }
   }, [])
 
@@ -95,23 +116,26 @@ export default function ChatBox({ userEmail, userName, isAdmin }: ChatBoxProps) 
         {messages.length === 0 ? (
           <div className="text-center text-gray-400 text-sm">메시지가 없습니다</div>
         ) : (
-          messages.map((msg) => (
-            <div key={msg.id} className="text-sm">
-              <div className="flex items-baseline gap-2">
-                <span
-                  className={`font-bold ${
-                    msg.is_admin ? 'text-red-600' : 'text-blue-600'
-                  }`}
-                >
-                  {msg.nickname}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(msg.created_at).toLocaleTimeString()}
-                </span>
+          <>
+            {messages.map((msg) => (
+              <div key={msg.id} className="text-sm">
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className={`font-bold ${
+                      msg.is_admin ? 'text-red-600' : 'text-blue-600'
+                    }`}
+                  >
+                    {msg.nickname}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(msg.created_at).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-gray-800 mt-1">{msg.message}</p>
               </div>
-              <p className="text-gray-800 mt-1">{msg.message}</p>
-            </div>
-          ))
+            ))}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 
