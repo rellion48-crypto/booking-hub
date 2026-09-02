@@ -76,7 +76,13 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
 
     // Default to Seoul if address can't be geocoded
     const defaultCoords: [number, number] = [37.5665, 126.978]
-    L.marker(defaultCoords)
+    const defaultIcon = L.icon({
+      iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSI0MSIgdmlld0JveD0iMCAwIDI1IDQxIj48cGF0aCBmaWxsPSIjMzM4OEZGIiBkPSJNMTIuNSAwQzUuNTk3IDAgMCA1LjU5NyAwIDEyLjVjMCA3LjEwMyAxMi41IDI4LjkwNyAxMi41IDI4LjkwN3MxMi41LTIxLjgwNCAxMi41LTI4LjkwN0MyNSA1LjU5NyAxOS40MDMgMCAxMi41IDB6bTAgMTcuNWMtMi43NTcgMC01LTIuMjQzLTUtNXMyLjI0My01IDUtNSA1IDIuMjQzIDUgNS0yLjI0MyA1LTUgNXoiLz48L3N2Zz4=',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+    })
+    L.marker(defaultCoords, { icon: defaultIcon })
       .addTo(mapInstanceRef.current)
       .bindPopup(`${address}<br/>(지도 표시는 기본 위치입니다)`)
       .openPopup()
