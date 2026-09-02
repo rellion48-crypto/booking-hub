@@ -58,34 +58,51 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
   useEffect(() => {
     if (!address || !mapRef.current) return
 
-    // Initialize map if not already done
-    if (!mapInstanceRef.current) {
-      mapInstanceRef.current = L.map(mapRef.current).setView([37.5665, 126.978], 13)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(mapInstanceRef.current)
-    }
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (!mapRef.current) return
 
-    // Clear previous markers
-    mapInstanceRef.current.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        mapInstanceRef.current?.removeLayer(layer)
+      // Initialize map if not already done
+      if (!mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current = L.map(mapRef.current).setView([37.5665, 126.978], 13)
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+          }).addTo(mapInstanceRef.current)
+        } catch (err) {
+          console.error('Map initialization error:', err)
+          return
+        }
       }
-    })
 
-    // Default to Seoul if address can't be geocoded
-    const defaultCoords: [number, number] = [37.5665, 126.978]
-    const defaultIcon = L.icon({
-      iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSI0MSIgdmlld0JveD0iMCAwIDI1IDQxIj48cGF0aCBmaWxsPSIjMzM4OEZGIiBkPSJNMTIuNSAwQzUuNTk3IDAgMCA1LjU5NyAwIDEyLjVjMCA3LjEwMyAxMi41IDI4LjkwNyAxMi41IDI4LjkwN3MxMi41LTIxLjgwNCAxMi41LTI4LjkwN0MyNSA1LjU5NyAxOS40MDMgMCAxMi41IDB6bTAgMTcuNWMtMi43NTcgMC01LTIuMjQzLTUtNXMyLjI0My01IDUtNSA1IDIuMjQzIDUgNS0yLjI0MyA1LTUgNXoiLz48L3N2Zz4=',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-    })
-    L.marker(defaultCoords, { icon: defaultIcon })
-      .addTo(mapInstanceRef.current)
-      .bindPopup(`${address}<br/>(지도 표시는 기본 위치입니다)`)
-      .openPopup()
+      // Clear previous markers
+      mapInstanceRef.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          mapInstanceRef.current?.removeLayer(layer)
+        }
+      })
+
+      // Invalidate map size after render
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize()
+      }
+
+      // Default to Seoul if address can't be geocoded
+      const defaultCoords: [number, number] = [37.5665, 126.978]
+      const defaultIcon = L.icon({
+        iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSI0MSIgdmlld0JveD0iMCAwIDI1IDQxIj48cGF0aCBmaWxsPSIjMzM4OEZGIiBkPSJNMTIuNSAwQzUuNTk3IDAgMCA1LjU5NyAwIDEyLjVjMCA3LjEwMyAxMi41IDI4LjkwNyAxMi41IDI4LjkwN3MxMi41LTIxLjgwNCAxMi41LTI4LjkwN0MyNSA1LjU5NyAxOS40MDMgMCAxMi41IDB6bTAgMTcuNWMtMi43NTcgMC01LTIuMjQzLTUtNXMyLjI0My01IDUtNSA1IDIuMjQzIDUgNS0yLjI0MyA1LTUgNXoiLz48L3N2Zz4=',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      })
+      L.marker(defaultCoords, { icon: defaultIcon })
+        .addTo(mapInstanceRef.current)
+        .bindPopup(`${address}<br/>(지도 표시는 기본 위치입니다)`)
+        .openPopup()
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [address])
 
   return (
