@@ -50,56 +50,75 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
     }
   }
 
+  const mapEmbedUrl = address
+    ? `https://www.google.com/maps/embed/v1/place?key=REDACTED&q=${encodeURIComponent(address)}`
+    : ''
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-6">
-      <h2 className="text-xl font-bold mb-4">새 예약 추가</h2>
+    <div className="space-y-6 mb-6">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-bold mb-4">새 예약 추가</h2>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="고객사"
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="서비스"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+
         <input
           type="text"
-          placeholder="고객사"
-          value={customer}
-          onChange={(e) => setCustomer(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
+          placeholder="주소"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
         />
-        <input
-          type="text"
-          placeholder="서비스"
-          value={service}
-          onChange={(e) => setService(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
-        />
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
-        />
-      </div>
 
-      <input
-        type="text"
-        placeholder="주소"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
-      />
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {loading ? '추가 중...' : '예약하기'}
+        </button>
+      </form>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 disabled:bg-gray-400"
-      >
-        {loading ? '추가 중...' : '예약하기'}
-      </button>
-    </form>
+      {address && (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-bold mb-4">위치 미리보기</h3>
+          <div style={{ position: 'relative', width: '100%', height: '400px', borderRadius: '8px', overflow: 'hidden' }}>
+            <iframe
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+              loading="lazy"
+              src={mapEmbedUrl}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
