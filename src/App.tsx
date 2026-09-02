@@ -73,7 +73,9 @@ export default function App() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold">예약 관리 허브</h1>
-            <p className="text-sm text-green-600 font-semibold mt-1">👤 관리자</p>
+            {isAdmin && (
+              <p className="text-sm text-green-600 font-semibold mt-1">👤 관리자</p>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{user.email}</span>
