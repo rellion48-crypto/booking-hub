@@ -74,7 +74,14 @@ export default function MyBookings({ userEmail, refreshKey }: MyBookingsProps) {
 
           <div className="mb-4">
             <p className="text-xs text-gray-500">주소</p>
-            <p className="text-gray-800">{booking.address}</p>
+            <a
+              href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(booking.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              {booking.address}
+            </a>
           </div>
 
           <div className="flex justify-between items-center">
