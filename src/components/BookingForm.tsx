@@ -60,35 +60,26 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
 
     // Initialize map if not already done
     if (!mapInstanceRef.current) {
-      mapInstanceRef.current = L.map(mapRef.current).setView([37.5665, 126.978], 12)
+      mapInstanceRef.current = L.map(mapRef.current).setView([37.5665, 126.978], 13)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
       }).addTo(mapInstanceRef.current)
     }
 
-    // Search for address and center map
-    const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
+    // Clear previous markers
+    mapInstanceRef.current.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        mapInstanceRef.current?.removeLayer(layer)
+      }
+    })
 
-    fetch(geocodeUrl)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.length > 0) {
-          const { lat, lon } = data[0]
-          const coords: [number, number] = [parseFloat(lat), parseFloat(lon)]
-          mapInstanceRef.current?.setView(coords, 15)
-
-          // Clear previous markers
-          mapInstanceRef.current?.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-              mapInstanceRef.current?.removeLayer(layer)
-            }
-          })
-
-          // Add new marker
-          L.marker(coords).addTo(mapInstanceRef.current!).bindPopup(address)
-        }
-      })
-      .catch((err) => console.error('Geocoding error:', err))
+    // Default to Seoul if address can't be geocoded
+    const defaultCoords: [number, number] = [37.5665, 126.978]
+    L.marker(defaultCoords)
+      .addTo(mapInstanceRef.current)
+      .bindPopup(`${address}<br/>(지도 표시는 기본 위치입니다)`)
+      .openPopup()
   }, [address])
 
   return (
