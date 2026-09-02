@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 interface BookingFormProps {
   onSuccess: () => void
@@ -13,6 +15,8 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
   const [address, setAddress] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<L.Map | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,10 +54,42 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
     }
   }
 
-  // Google Maps Embed URL
-  const mapEmbedUrl = address
-    ? `https://www.google.com/maps/embed/v1/place?q=${encodeURIComponent(address)}`
-    : ''
+  // Leaflet Map rendering
+  useEffect(() => {
+    if (!address || !mapRef.current) return
+
+    // Initialize map if not already done
+    if (!mapInstanceRef.current) {
+      mapInstanceRef.current = L.map(mapRef.current).setView([37.5665, 126.978], 12)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+      }).addTo(mapInstanceRef.current)
+    }
+
+    // Search for address and center map
+    const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`
+
+    fetch(geocodeUrl)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.length > 0) {
+          const { lat, lon } = data[0]
+          const coords: [number, number] = [parseFloat(lat), parseFloat(lon)]
+          mapInstanceRef.current?.setView(coords, 15)
+
+          // Clear previous markers
+          mapInstanceRef.current?.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+              mapInstanceRef.current?.removeLayer(layer)
+            }
+          })
+
+          // Add new marker
+          L.marker(coords).addTo(mapInstanceRef.current!).bindPopup(address)
+        }
+      })
+      .catch((err) => console.error('Geocoding error:', err))
+  }, [address])
 
   return (
     <div className="space-y-6 mb-6">
@@ -112,12 +148,14 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
       {address && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-bold mb-4">위치 미리보기</h3>
-          <iframe
-            width="100%"
-            height="400"
-            style={{ border: 0, borderRadius: '8px' }}
-            loading="lazy"
-            src={mapEmbedUrl}
+          <div
+            ref={mapRef}
+            style={{
+              width: '100%',
+              height: '400px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
           />
         </div>
       )}
