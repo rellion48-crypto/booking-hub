@@ -22,17 +22,6 @@ export default function App() {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
       setLoading(false)
-
-      // Send admin login notification
-      if (session?.user?.email === ADMIN_EMAIL) {
-        await supabase.from('chat_messages').insert({
-          user_id: session.user.id,
-          email: session.user.email || '',
-          nickname: '시스템',
-          message: '관리자가 로그인했습니다.',
-          is_admin: true,
-        })
-      }
     }
 
     checkUser()
@@ -40,17 +29,6 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null)
-
-        // Send admin login notification on state change
-        if (session?.user?.email === ADMIN_EMAIL && _event === 'SIGNED_IN') {
-          supabase.from('chat_messages').insert({
-            user_id: session.user.id,
-            email: session.user.email || '',
-            nickname: '시스템',
-            message: '관리자가 로그인했습니다.',
-            is_admin: true,
-          })
-        }
       }
     )
 
