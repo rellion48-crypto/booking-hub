@@ -23,7 +23,7 @@ export default function App() {
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setUser(session?.user || null)
       }
     )
@@ -52,7 +52,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginPage onLoginSuccess={() => window.location.reload()} />
+    return <LoginPage />
   }
 
   const tabs: TabType[] = ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
