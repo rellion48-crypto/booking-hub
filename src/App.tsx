@@ -4,8 +4,9 @@ import BookingForm from './components/BookingForm'
 import BookingTable from './components/BookingTable'
 import StatCards from './components/StatCards'
 import LoginPage from './components/LoginPage'
+import ChatBox from './components/ChatBox'
 
-type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인'
+type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '채팅'
 
 const ADMIN_EMAIL = 'rellion48@gmail.com'
 
@@ -20,6 +21,17 @@ export default function App() {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
       setLoading(false)
+
+      // Send admin login notification
+      if (session?.user?.email === ADMIN_EMAIL) {
+        await supabase.from('chat_messages').insert({
+          user_id: session.user.id,
+          email: session.user.email || '',
+          nickname: '시스템',
+          message: '관리자가 로그인했습니다.',
+          is_admin: true,
+        })
+      }
     }
 
     checkUser()
@@ -27,11 +39,22 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null)
+
+        // Send admin login notification on state change
+        if (session?.user?.email === ADMIN_EMAIL && _event === 'SIGNED_IN') {
+          supabase.from('chat_messages').insert({
+            user_id: session.user.id,
+            email: session.user.email || '',
+            nickname: '시스템',
+            message: '관리자가 로그인했습니다.',
+            is_admin: true,
+          })
+        }
       }
     )
 
     return () => {
-      subscription?.unsubscribe()
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -60,8 +83,8 @@ export default function App() {
   }
 
   const tabs: TabType[] = isAdmin
-    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인']
-    : ['예약목록', '예약추가']
+    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '채팅']
+    : ['예약목록', '예약추가', '채팅']
 
   if (!isAdmin && !tabs.includes(activeTab)) {
     setActiveTab('예약목록')
@@ -110,6 +133,10 @@ export default function App() {
             <h2 className="text-2xl font-bold mb-4">위치 확인</h2>
             <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} />
           </div>
+        )}
+
+        {activeTab === '채팅' && (
+          <ChatBox userEmail={user.email} userName={user.user_metadata?.name || user.email} isAdmin={isAdmin} />
         )}
       </div>
 
