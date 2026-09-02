@@ -1,8 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 interface BookingFormProps {
   onSuccess: () => void
+}
+
+declare global {
+  interface Window {
+    kakao: any
+  }
 }
 
 export default function BookingForm({ onSuccess }: BookingFormProps) {
@@ -13,6 +19,7 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
   const [address, setAddress] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,10 +57,34 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
     }
   }
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-  const mapEmbedUrl = address && apiKey
-    ? `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(address)}`
-    : ''
+  // Kakao Map rendering
+  useEffect(() => {
+    if (!address || !mapRef.current || !window.kakao) return
+
+    const container = mapRef.current
+    const options = {
+      center: new window.kakao.maps.LatLng(37.566826, 126.9786567), // 기본값: 서울
+      level: 3,
+    }
+
+    const map = new window.kakao.maps.Map(container, options)
+
+    // 주소로 좌표 찾기
+    const geocoder = new window.kakao.maps.services.Geocoder()
+    geocoder.addressSearch(address, (result: any, status: any) => {
+      if (status === window.kakao.maps.services.Status.OK) {
+        const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
+        map.setCenter(coords)
+
+        // 마커 추가
+        new window.kakao.maps.Marker({
+          map: map,
+          position: coords,
+          title: address,
+        })
+      }
+    })
+  }, [address])
 
   return (
     <div className="space-y-6 mb-6">
@@ -112,13 +143,15 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
       {address && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-bold mb-4">위치 미리보기</h3>
-          <div style={{ position: 'relative', width: '100%', height: '400px', borderRadius: '8px', overflow: 'hidden' }}>
-            <iframe
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-              loading="lazy"
-              src={mapEmbedUrl}
-            />
-          </div>
+          <div
+            ref={mapRef}
+            style={{
+              width: '100%',
+              height: '400px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          />
         </div>
       )}
     </div>
