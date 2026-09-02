@@ -59,31 +59,45 @@ export default function BookingForm({ onSuccess }: BookingFormProps) {
 
   // Kakao Map rendering
   useEffect(() => {
-    if (!address || !mapRef.current || !window.kakao) return
+    console.log('Map effect triggered. Address:', address)
+    console.log('Kakao SDK:', window.kakao ? 'loaded' : 'not loaded')
+    console.log('mapRef.current:', mapRef.current ? 'exists' : 'null')
 
-    const container = mapRef.current
-    const options = {
-      center: new window.kakao.maps.LatLng(37.566826, 126.9786567), // 기본값: 서울
-      level: 3,
+    if (!address || !mapRef.current || !window.kakao) {
+      console.log('Skipping map render - missing requirements')
+      return
     }
 
-    const map = new window.kakao.maps.Map(container, options)
-
-    // 주소로 좌표 찾기
-    const geocoder = new window.kakao.maps.services.Geocoder()
-    geocoder.addressSearch(address, (result: any, status: any) => {
-      if (status === window.kakao.maps.services.Status.OK) {
-        const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
-        map.setCenter(coords)
-
-        // 마커 추가
-        new window.kakao.maps.Marker({
-          map: map,
-          position: coords,
-          title: address,
-        })
+    try {
+      const container = mapRef.current
+      const options = {
+        center: new window.kakao.maps.LatLng(37.566826, 126.9786567),
+        level: 3,
       }
-    })
+
+      const map = new window.kakao.maps.Map(container, options)
+      console.log('Map created successfully')
+
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      geocoder.addressSearch(address, (result: any, status: any) => {
+        console.log('Geocoding result:', { result, status })
+        if (status === window.kakao.maps.services.Status.OK) {
+          const coords = new window.kakao.maps.LatLng(result[0].y, result[0].x)
+          map.setCenter(coords)
+
+          new window.kakao.maps.Marker({
+            map: map,
+            position: coords,
+            title: address,
+          })
+          console.log('Marker added successfully')
+        } else {
+          console.error('Geocoding failed:', status)
+        }
+      })
+    } catch (error) {
+      console.error('Map rendering error:', error)
+    }
   }, [address])
 
   return (
