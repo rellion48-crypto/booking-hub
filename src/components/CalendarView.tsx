@@ -1,19 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import { supabase } from '../lib/supabase'
-import './CalendarView.css'
-
-const locales = { ko }
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-})
 
 interface Booking {
   id: number
@@ -27,14 +13,6 @@ interface Booking {
   email?: string
 }
 
-interface CalendarEvent {
-  id: number
-  title: string
-  start: Date
-  end: Date
-  resource: Booking
-}
-
 interface CalendarViewProps {
   refreshKey: number
   isAdmin: boolean
@@ -46,15 +24,15 @@ export default function CalendarView({
   isAdmin,
   userEmail,
 }: CalendarViewProps) {
-  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState<string>('')
 
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true)
       let query = supabase.from('bookings').select('*')
 
-      // Non-admin users only see their own bookings
       if (!isAdmin && userEmail) {
         query = query.eq('email', userEmail)
       }
@@ -63,28 +41,12 @@ export default function CalendarView({
 
       if (error) {
         console.error('조회 실패:', error)
-        setEvents([])
+        setBookings([])
       } else {
-        // Convert bookings to calendar events
-        const calendarEvents: CalendarEvent[] = (data || []).map(
-          (booking: Booking) => {
-            const [hours, minutes] = booking.time.split(':').map(Number)
-            const start = new Date(booking.date)
-            start.setHours(hours, minutes, 0)
-
-            const end = new Date(start)
-            end.setHours(end.getHours() + 1)
-
-            return {
-              id: booking.id,
-              title: `${booking.service} - ${booking.customer}`,
-              start,
-              end,
-              resource: booking,
-            }
-          }
-        )
-        setEvents(calendarEvents)
+        setBookings(data || [])
+        if (data && data.length > 0) {
+          setSelectedDate(data[0].date)
+        }
       }
       setLoading(false)
     }
@@ -96,64 +58,130 @@ export default function CalendarView({
     return <div className="text-center py-8 text-gray-500">로딩 중...</div>
   }
 
-  const eventStyleGetter = (event: any) => {
-    let backgroundColor = '#3b82f6' // blue
-    if (event.resource.status === 'confirmed') {
-      backgroundColor = '#10b981' // green
-    } else if (event.resource.status === 'pending') {
-      backgroundColor = '#f59e0b' // amber
-    }
+  // Group bookings by date
+  const groupedByDate = bookings.reduce(
+    (acc, booking) => {
+      if (!acc[booking.date]) {
+        acc[booking.date] = []
+      }
+      acc[booking.date].push(booking)
+      return acc
+    },
+    {} as Record<string, Booking[]>
+  )
 
-    return {
-      style: {
-        backgroundColor,
-        borderRadius: '5px',
-        opacity: 0.8,
-        color: 'white',
-        border: '0px',
-        display: 'block',
-      },
-    }
-  }
+  const sortedDates = Object.keys(groupedByDate).sort()
+  const displayBookings = selectedDate ? groupedByDate[selectedDate] || [] : []
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-4">
-        {isAdmin ? '전체 예약 캘린더' : '내 예약 캘린더'}
+      <h2 className="text-2xl font-bold mb-6">
+        {isAdmin ? '전체 예약' : '내 예약'}
       </h2>
 
-      <div style={{ height: 700 }}>
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%' }}
-          eventPropGetter={eventStyleGetter}
-          popup
-          views={['month', 'week', 'day']}
-          defaultView="month"
-          onSelectEvent={(event) => {
-            const booking = event.resource
-            alert(
-              `예약 정보\n고객사: ${booking.customer}\n서비스: ${booking.service}\n날짜: ${booking.date}\n시간: ${booking.time}\n주소: ${booking.address}\n상태: ${booking.status === 'confirmed' ? '확정됨' : '대기중'}`
-            )
-          }}
-        />
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Date List */}
+        <div className="lg:col-span-1">
+          <h3 className="font-bold text-gray-700 mb-3">날짜 선택</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+            {sortedDates.length === 0 ? (
+              <p className="text-sm text-gray-500">예약이 없습니다</p>
+            ) : (
+              sortedDates.map((date) => (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`w-full text-left p-3 rounded transition-colors ${
+                    selectedDate === date
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className="font-semibold">{date}</div>
+                  <div className="text-xs">
+                    {groupedByDate[date].length}개 예약
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded"></div>
-          <span className="text-sm text-gray-600">확정됨</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-amber-500 rounded"></div>
-          <span className="text-sm text-gray-600">대기중</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
-          <span className="text-sm text-gray-600">기타</span>
+        {/* Bookings for Selected Date */}
+        <div className="lg:col-span-3">
+          {selectedDate && (
+            <>
+              <h3 className="font-bold text-gray-700 mb-3">
+                {selectedDate} 예약 ({displayBookings.length}개)
+              </h3>
+              <div className="space-y-3">
+                {displayBookings.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">
+                    이 날짜의 예약이 없습니다
+                  </p>
+                ) : (
+                  displayBookings.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">고객사</p>
+                          <p className="font-semibold text-gray-800">
+                            {booking.customer}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">서비스</p>
+                          <p className="font-semibold text-gray-800">
+                            {booking.service}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">시간</p>
+                          <p className="font-semibold text-gray-800">
+                            {booking.time}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">상태</p>
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                              booking.status === 'confirmed'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {booking.status === 'confirmed'
+                              ? '확정됨'
+                              : '대기중'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500">주소</p>
+                        <a
+                          href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(
+                            booking.address
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          {booking.address}
+                        </a>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
