@@ -103,18 +103,19 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
       // Add to Google Calendar
       console.log('🔍 예약 저장 성공, 구글 캘린더 연동 시작...')
       try {
-        const session = await supabase.auth.getSession()
-        const refreshToken = localStorage.getItem('google_refresh_token')
-        console.log('📌 Refresh Token:', refreshToken ? '있음' : '없음')
+        const { data: { session } } = await supabase.auth.getSession()
+        const refreshToken = session?.provider_token
+        console.log('📌 Provider Token:', refreshToken ? '있음' : '없음')
 
         if (refreshToken) {
+          console.log('🚀 Edge Function 호출 중...')
           const response = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${session.data.session?.access_token || ''}`,
+                Authorization: `Bearer ${session?.access_token || ''}`,
               },
               body: JSON.stringify({
                 refreshToken,
