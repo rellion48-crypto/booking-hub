@@ -127,15 +127,14 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
               }),
             }
           )
-        } else {
-          console.warn('⚠️ Token 부족:', { refreshToken: !!refreshToken, accessToken: !!session?.access_token })
 
           if (response.ok) {
             console.log('✅ 구글 캘린더에 이벤트 추가됨')
           } else {
-            const errorData = await response.json()
-            console.error('❌ 구글 캘린더 추가 실패:', errorData)
+            console.error('❌ 구글 캘린더 추가 실패 (상태:', response.status, ')')
           }
+        } else {
+          console.warn('⚠️ Token 부족:', { refreshToken: !!refreshToken, accessToken: !!session?.access_token })
         }
       } catch (err) {
         console.error('구글 캘린더 연동 에러:', err)
