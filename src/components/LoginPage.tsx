@@ -13,7 +13,6 @@ export default function LoginPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}`,
-        scopes: 'openid profile email https://www.googleapis.com/auth/calendar',
       },
     })
 
