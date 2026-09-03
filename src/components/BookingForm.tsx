@@ -107,7 +107,7 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
         const refreshToken = session?.provider_token
         console.log('📌 Provider Token:', refreshToken ? '있음' : '없음')
 
-        if (refreshToken) {
+        if (refreshToken && session?.access_token) {
           console.log('🚀 Edge Function 호출 중...')
           const response = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`,
@@ -115,7 +115,7 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${session?.access_token || ''}`,
+                Authorization: `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
                 refreshToken,
@@ -127,6 +127,8 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
               }),
             }
           )
+        } else {
+          console.warn('⚠️ Token 부족:', { refreshToken: !!refreshToken, accessToken: !!session?.access_token })
 
           if (response.ok) {
             console.log('✅ 구글 캘린더에 이벤트 추가됨')
