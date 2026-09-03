@@ -40,6 +40,11 @@ export default function App() {
         const currentUser = session?.user || null
         setUser(currentUser)
 
+        // Save refresh token for Google Calendar
+        if (session?.provider_refresh_token) {
+          localStorage.setItem('google_refresh_token', session.provider_refresh_token)
+        }
+
         // Update tab based on role on auth change
         if (currentUser?.email === ADMIN_EMAIL) {
           setActiveTab('대시보드')
