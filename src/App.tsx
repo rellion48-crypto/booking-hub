@@ -6,8 +6,9 @@ import StatCards from './components/StatCards'
 import LoginPage from './components/LoginPage'
 import ChatBox from './components/ChatBox'
 import MyBookings from './components/MyBookings'
+import CalendarView from './components/CalendarView'
 
-type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '채팅' | '내 예약'
+type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '캘린더' | '채팅' | '내 예약'
 
 const ADMIN_EMAIL = 'rellion48@gmail.com'
 
@@ -82,8 +83,8 @@ export default function App() {
   }
 
   const tabs: TabType[] = isAdmin
-    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '채팅']
-    : ['예약추가', '내 예약', '채팅']
+    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '캘린더', '채팅']
+    : ['예약추가', '내 예약', '캘린더', '채팅']
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -128,6 +129,10 @@ export default function App() {
             <h2 className="text-2xl font-bold mb-4">위치 확인</h2>
             <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} />
           </div>
+        )}
+
+        {activeTab === '캘린더' && (
+          <CalendarView refreshKey={refreshKey} isAdmin={isAdmin} userEmail={user.email} />
         )}
 
         {activeTab === '채팅' && (
