@@ -100,39 +100,6 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
       setError('예약 추가 실패: ' + insertError.message)
       setLoading(false)
     } else {
-      // Try to add to Google Calendar
-      const refreshToken = localStorage.getItem('google_refresh_token')
-      if (refreshToken) {
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-              },
-              body: JSON.stringify({
-                refreshToken,
-                customer,
-                service,
-                date,
-                time,
-                address,
-              }),
-            }
-          )
-
-          if (response.ok) {
-            console.log('구글 캘린더에 이벤트 추가됨')
-          } else {
-            console.error('구글 캘린더 추가 실패:', await response.json())
-          }
-        } catch (err) {
-          console.error('구글 캘린더 연동 에러:', err)
-        }
-      }
-
       setCustomer('')
       setService('')
       setDate('')
