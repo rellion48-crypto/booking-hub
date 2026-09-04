@@ -72,8 +72,8 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
       try {
         const refreshToken = session?.provider_token
         if (refreshToken && session?.access_token) {
-          console.log('🚀 Edge Function 호출 중...')
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`, {
+          console.log('📅 구글 캘린더에 이벤트 추가 중...')
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -84,13 +84,23 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
               customer,
               service: memo,
               date,
-              time: '',
+              time: '', // 슬롯 모델에서는 시간이 확정되지 않음
               address,
             }),
           })
+
+          if (response.ok) {
+            const result = await response.json()
+            console.log('✅ 구글 캘린더 이벤트 추가됨:', result.eventId)
+          } else {
+            const error = await response.json()
+            console.warn('⚠️ 구글 캘린더 추가 실패:', error)
+          }
+        } else {
+          console.log('⏭️ Google 토큰 없음 - 캘린더 동기화 건너뜀')
         }
       } catch (err) {
-        console.error('구글 캘린더 연동 에러:', err)
+        console.error('❌ 구글 캘린더 연동 에러:', err)
       }
 
       setCustomer('')

@@ -17,6 +17,14 @@ serve(async (req) => {
       address,
     } = await req.json();
 
+    // Validate required fields
+    if (!refreshToken || !customer || !date) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: refreshToken, customer, date" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Get new access token using refresh token
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -29,21 +37,31 @@ serve(async (req) => {
       }).toString(),
     });
 
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.json();
+      return new Response(
+        JSON.stringify({ error: "Failed to refresh token", details: error }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
     // Create calendar event
-    const startDateTime = new Date(`${date}T${time}`).toISOString();
+    // time이 비어있으면 09:00 기본값 사용 (슬롯 모델에서는 시간 미정)
+    const eventTime = time || "09:00";
+    const startDateTime = new Date(`${date}T${eventTime}:00`).toISOString();
     const endDateTime = new Date(
-      new Date(`${date}T${time}`).getTime() + 60 * 60 * 1000
+      new Date(`${date}T${eventTime}:00`).getTime() + 60 * 60 * 1000
     ).toISOString();
 
     const event = {
-      summary: `${service} - ${customer}`,
-      description: `고객사: ${customer}\n서비스: ${service}\n주소: ${address}`,
+      summary: `${service || "예약"} - ${customer}`,
+      description: `고객사: ${customer}\n서비스: ${service || "미정"}\n주소: ${address || "미정"}`,
       start: { dateTime: startDateTime, timeZone: "Asia/Seoul" },
       end: { dateTime: endDateTime, timeZone: "Asia/Seoul" },
-      location: address,
+      location: address || "",
     };
 
     const calendarResponse = await fetch(
@@ -60,7 +78,10 @@ serve(async (req) => {
 
     if (!calendarResponse.ok) {
       const error = await calendarResponse.json();
-      return new Response(JSON.stringify({ error }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "Failed to create calendar event", details: error }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     const calendarEvent = await calendarResponse.json();
@@ -69,6 +90,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
