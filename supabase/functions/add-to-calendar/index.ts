@@ -17,6 +17,8 @@ serve(async (req) => {
       address,
     } = await req.json();
 
+    console.log("📥 수신 데이터:", JSON.stringify({ refreshToken: refreshToken?.substring(0, 20), customer, service, date, time, address }));
+
     // Validate required fields
     if (!refreshToken || !customer || !date) {
       return new Response(
@@ -61,12 +63,19 @@ serve(async (req) => {
     }
 
     // UTC 기준으로 날짜 생성 (타임존 충돌 방지)
+    console.log("🔍 date parsing:", { dateStr: date, type: typeof date });
     const [year, month, day] = date.split('-').map(Number);
+    console.log("🔍 parsed values:", { year, month, day });
+
     const startDate = new Date(Date.UTC(year, month - 1, day, 9, 0, 0));
+    console.log("🔍 startDate created:", { startDate: startDate.toISOString(), isValid: !isNaN(startDate.getTime()) });
+
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    console.log("🔍 endDate created:", { endDate: endDate.toISOString(), isValid: !isNaN(endDate.getTime()) });
 
     const startDateTime = startDate.toISOString();
     const endDateTime = endDate.toISOString();
+    console.log("🔍 ISO strings:", { startDateTime, endDateTime });
 
     const event = {
       summary: `${service || "예약"} - ${customer}`,
@@ -75,6 +84,8 @@ serve(async (req) => {
       end: { dateTime: endDateTime, timeZone: "Asia/Seoul" },
       location: address || "",
     };
+
+    console.log("📅 Google Calendar event:", JSON.stringify(event, null, 2));
 
     const calendarResponse = await fetch(
       `${GOOGLE_CALENDAR_API}/calendars/primary/events`,
