@@ -106,37 +106,46 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
   }
 
   return (
-    <div className="space-y-6 mb-6">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">새 예약 추가</h2>
+    <div className="max-w-2xl">
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-300 rounded-lg p-6">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900">예약 정보 입력</h3>
           <div
-            className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${judgment.badgeColor}`}
+            className={`px-3 py-1 rounded text-white text-xs font-semibold ${
+              judgment.route === 'ask'
+                ? 'bg-blue-500'
+                : 'bg-green-500'
+            }`}
           >
-            {judgment.route === 'ask' ? '빈 칸' : '준비됨'}
+            {judgment.route === 'ask' ? '입력 필요' : '준비됨'}
           </div>
         </div>
 
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-300 text-red-700 text-sm rounded">
+            {error}
+          </div>
+        )}
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold mb-1">고객사</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">고객사</label>
             <input
               type="text"
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              placeholder="고객사명을 입력하세요"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-1">종류</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">종류</label>
               <select
                 value={kind}
                 onChange={(e) => setKind(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               >
                 <option value="">선택하세요</option>
                 <option value="서울">서울</option>
@@ -147,11 +156,11 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1">형태</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">형태</label>
               <select
                 value={form}
                 onChange={(e) => setForm(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               >
                 <option value="">선택하세요</option>
                 <option value="외근">외근</option>
@@ -161,56 +170,58 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">메모</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">메모</label>
             <input
               type="text"
               placeholder="미팅, 기획 회의 등"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
             />
           </div>
 
           {form === '외근' && (
             <div>
-              <label className="block text-sm font-semibold mb-1">위치</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">위치 <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 placeholder="위치를 입력하세요"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
               />
+              <p className="text-xs text-gray-500 mt-1">외근일 경우 필수입니다</p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-semibold mb-1">날짜</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">날짜</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">희망 슬롯 (체크 순서가 우선순위)</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-3">희망 시간대</label>
+            <p className="text-xs text-gray-600 mb-2">체크한 순서가 우선순위입니다</p>
             <div className="space-y-2">
               {SLOTS.map((slot) => {
                 const priority = slots.find((s) => s.slot === slot)?.priority
                 return (
-                  <label key={slot} className="flex items-center gap-3 cursor-pointer">
+                  <label key={slot} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
                     <input
                       type="checkbox"
                       checked={priority !== undefined}
                       onChange={() => toggleSlot(slot)}
-                      className="w-4 h-4"
+                      className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                     />
-                    <span className="flex-1">{slot}</span>
+                    <span className="flex-1 text-sm text-gray-900">{slot}</span>
                     {priority !== undefined && (
-                      <span className="bg-blue-500 text-white px-2 py-1 rounded text-sm font-semibold">
-                        {priority}
+                      <span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                        {priority}순위
                       </span>
                     )}
                   </label>
@@ -220,13 +231,15 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading || judgment.route === 'ask'}
-          className="w-full mt-6 bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {loading ? '추가 중...' : '예약하기'}
-        </button>
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={loading || judgment.route === 'ask'}
+            className="w-full py-2.5 bg-green-600 text-white font-semibold rounded text-sm hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {loading ? '예약 추가 중...' : '예약하기'}
+          </button>
+        </div>
       </form>
     </div>
   )

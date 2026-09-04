@@ -219,20 +219,20 @@ export default function Dashboard({ refreshKey }: { refreshKey: number }) {
 
   return (
     <div className="space-y-6">
-      {/* 토글과 버튼 */}
-      <div className="flex gap-4 items-center bg-white p-4 rounded-lg shadow-md">
-        <label className="flex items-center gap-2">
+      {/* 제어 패널 */}
+      <div className="bg-white border border-gray-300 rounded-lg p-4 flex gap-4 items-center">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={autoJudge}
             onChange={(e) => setAutoJudge(e.target.checked)}
-            className="w-4 h-4"
+            className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
           />
-          <span className="font-semibold">자동 판정</span>
+          <span className="text-sm font-semibold text-gray-900">자동 판정</span>
         </label>
         <button
           onClick={handleJudgeAll}
-          className="px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700"
+          className="px-4 py-2 bg-green-600 text-white rounded font-semibold text-sm hover:bg-green-700 transition"
         >
           전부 판정
         </button>
@@ -242,8 +242,8 @@ export default function Dashboard({ refreshKey }: { refreshKey: number }) {
       <WorkflowGraph counts={counts} lastPath={lastPath} />
 
       {/* 판정 로그 */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-bold mb-4">판정 로그</h3>
+      <div className="bg-white border border-gray-300 rounded-lg p-6">
+        <h3 className="text-lg font-bold mb-4 text-gray-900">판정 로그</h3>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {logs.length === 0 ? (
             <p className="text-gray-500 text-sm">판정 로그가 없습니다</p>
@@ -272,14 +272,14 @@ export default function Dashboard({ refreshKey }: { refreshKey: number }) {
 
       {/* 상태 보드 */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold">상태 보드</h3>
+        <h3 className="text-lg font-bold text-gray-900">상태 보드</h3>
         <div className="grid grid-cols-3 gap-4">
           {Object.entries(bookingsByDecision).map(([decision, cards]) => (
             <div key={decision}>
-              <h4 className="font-semibold mb-2 text-sm">{decisionDisplay[decision]}</h4>
+              <h4 className="font-semibold mb-2 text-sm text-gray-900">{decisionDisplay[decision]} ({cards.length})</h4>
               <div className="space-y-2">
                 {cards.map((booking) => (
-                  <div key={booking.id} className={`p-3 rounded border ${decisionColors[decision]}`}>
+                  <div key={booking.id} className={`p-3 rounded-lg border text-sm ${decisionColors[decision]}`}>
                     <p className="font-semibold text-sm">{booking.customer}</p>
                     <p className="text-xs text-gray-600">{booking.date}</p>
                     <p className="text-xs text-gray-600">
