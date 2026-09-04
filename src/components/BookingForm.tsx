@@ -47,8 +47,6 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
     setLoading(true)
     const slotsWanted = slots.map((s) => s.slot).join(',')
 
-    const { data: { session } } = await supabase.auth.getSession()
-
     const { error: insertError } = await supabase.from('bookings').insert({
       customer,
       kind,
@@ -69,15 +67,26 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
       setError('예약 추가 실패: ' + insertError.message)
       setLoading(false)
     } else {
+      console.log('✅ 예약 저장 성공')
       try {
-        const refreshToken = session?.provider_token
-        if (refreshToken && session?.access_token) {
+        const { data } = await supabase.auth.getSession()
+        const currentSession = data.session
+        const refreshToken = currentSession?.provider_token
+
+        console.log('📋 Session 정보:', {
+          hasSession: !!currentSession,
+          hasRefreshToken: !!refreshToken,
+          hasAccessToken: !!currentSession?.access_token,
+          provider: currentSession?.user?.app_metadata?.provider,
+        })
+
+        if (refreshToken && currentSession?.access_token) {
           console.log('📅 구글 캘린더에 이벤트 추가 중...')
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${currentSession!.access_token}`,
             },
             body: JSON.stringify({
               refreshToken,
@@ -89,6 +98,8 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
             }),
           })
 
+          console.log('📡 Edge Function 응답:', { status: response.status })
+
           if (response.ok) {
             const result = await response.json()
             console.log('✅ 구글 캘린더 이벤트 추가됨:', result.eventId)
@@ -97,7 +108,10 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
             console.warn('⚠️ 구글 캘린더 추가 실패:', error)
           }
         } else {
-          console.log('⏭️ Google 토큰 없음 - 캘린더 동기화 건너뜀')
+          console.log('⏭️ Google 토큰 없음 - 캘린더 연동 건너뜀', {
+            refreshToken: !!refreshToken,
+            accessToken: !!currentSession?.access_token,
+          })
         }
       } catch (err) {
         console.error('❌ 구글 캘린더 연동 에러:', err)
