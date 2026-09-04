@@ -78,6 +78,7 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
           hasRefreshToken: !!refreshToken,
           hasAccessToken: !!currentSession?.access_token,
           provider: currentSession?.user?.app_metadata?.provider,
+          refreshToken: refreshToken ? refreshToken.substring(0, 20) + '...' : 'none',
         })
 
         if (refreshToken && currentSession?.access_token) {
