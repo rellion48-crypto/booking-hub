@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import BookingForm from './components/BookingForm'
 import BookingTable from './components/BookingTable'
-import StatCards from './components/StatCards'
+import Dashboard from './components/Dashboard'
 import LoginPage from './components/LoginPage'
 import ChatBox from './components/ChatBox'
 import MyBookings from './components/MyBookings'
 import CalendarView from './components/CalendarView'
 
-type TabType = '대시보드' | '예약목록' | '예약추가' | '상태관리' | '위치확인' | '캘린더' | '채팅' | '내 예약'
+type TabType = '대시보드' | '예약목록' | '예약추가' | '미확정 관리' | '위치확인' | '캘린더' | '채팅' | '내 예약'
 
 const ADMIN_EMAIL = 'rellion48@gmail.com'
 
@@ -88,7 +88,7 @@ export default function App() {
   }
 
   const tabs: TabType[] = isAdmin
-    ? ['대시보드', '예약목록', '예약추가', '상태관리', '위치확인', '캘린더', '채팅']
+    ? ['대시보드', '예약목록', '예약추가', '미확정 관리', '위치확인', '캘린더', '채팅']
     : ['예약추가', '내 예약', '캘린더', '채팅']
 
   return (
@@ -112,7 +112,7 @@ export default function App() {
           </div>
         </div>
 
-        {activeTab === '대시보드' && <StatCards refreshKey={refreshKey} />}
+        {activeTab === '대시보드' && <Dashboard refreshKey={refreshKey} />}
 
         {activeTab === '예약목록' && (
           <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} isAdmin={isAdmin} />
@@ -122,9 +122,9 @@ export default function App() {
           <BookingForm onSuccess={handleFormSuccess} userEmail={user.email} />
         )}
 
-        {activeTab === '상태관리' && (
+        {activeTab === '미확정 관리' && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">상태 관리</h2>
+            <h2 className="text-2xl font-bold mb-4">미확정 관리</h2>
             <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} isAdmin={isAdmin} />
           </div>
         )}
