@@ -41,14 +41,13 @@ export function decide(booking: any, allBookings: any[], autoOn: boolean): Decid
     `3 ${booking.date} 달력: ${SLOTS.map((slot) => `${slot} ${occupiedSet.has(slot) ? 'X' : 'O'}`).join(', ')}`
   )
 
-  // 4. 후보 찾기
-  const candidates: SlotType[] = []
+  // 4. 후보 찾기 - 희망 순서대로 필요한 칸이 전부 비어있는 것 찾기
+  const candidates: SlotType[][] = []
   for (let i = 0; i < wanted.length; i++) {
     const slot = wanted[i]
     const req = requiredSlots(booking.kind, [slot])
     if (isAvailable(req, occupiedSet)) {
-      candidates.push(slot)
-      if (candidates.length === needCount) break
+      candidates.push(req)
     }
   }
 
@@ -65,7 +64,7 @@ export function decide(booking: any, allBookings: any[], autoOn: boolean): Decid
     }
   }
 
-  const candidateSlots = candidates.slice(0, needCount)
+  const candidateSlots = candidates[0]
   trace.push(`4 희망 순서대로 필요한 칸이 전부 O인 후보: ${candidateSlots.join(', ')}`)
 
   // 5. 같은 날짜의 다른 pending 예약과 비교
@@ -76,18 +75,20 @@ export function decide(booking: any, allBookings: any[], autoOn: boolean): Decid
   let conflictBooking = null
   for (const other of sameDatePending) {
     const otherWanted = (other.slots_wanted || '').split(',').map((s: string) => s.trim()) as SlotType[]
-    const otherCandidates: SlotType[] = []
+    const otherCandidates: SlotType[][] = []
     for (let i = 0; i < otherWanted.length; i++) {
       const slot = otherWanted[i]
       const req = requiredSlots(other.kind, [slot])
       if (isAvailable(req, occupiedSet)) {
-        otherCandidates.push(slot)
-        if (otherCandidates.length === NEED[other.kind]) break
+        otherCandidates.push(req)
       }
     }
 
+    // 다른 예약의 유일한 후보와 우리 후보가 겹칠 때
     if (otherCandidates.length === 1 && candidateSlots.length > 0) {
-      if (candidateSlots.includes(otherCandidates[0])) {
+      const otherSlots = otherCandidates[0]
+      const overlap = otherSlots.some((s) => candidateSlots.includes(s))
+      if (overlap) {
         conflictBooking = other
         break
       }
