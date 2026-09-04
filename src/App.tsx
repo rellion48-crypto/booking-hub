@@ -132,7 +132,7 @@ export default function App() {
         {activeTab === '위치확인' && (
           <div>
             <h2 className="text-2xl font-bold mb-4">위치 확인</h2>
-            <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} />
+            <BookingTable refreshKey={refreshKey} onStatusChange={handleRefresh} showAll={true} />
           </div>
         )}
 

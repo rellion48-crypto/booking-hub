@@ -28,14 +28,36 @@ const decisionBadgeColor: Record<string, string> = {
   asking: 'bg-blue-100 text-blue-800',
 }
 
-export default function BookingTable({
-  refreshKey,
-  onStatusChange,
-}: {
+interface Props {
   refreshKey: number
   onStatusChange?: () => void
   isAdmin?: boolean
-}) {
+  showAll?: boolean
+}
+
+const decisionDisplay: Record<string, string> = {
+  pending: '대기',
+  confirmed_auto: '확정-자동',
+  confirmed_human: '확정-수동',
+  review: '검토',
+  rejected: '기각',
+  asking: '질문',
+}
+
+const decisionColors: Record<string, string> = {
+  pending: 'bg-gray-100 text-gray-800',
+  confirmed_auto: 'bg-green-100 text-green-800',
+  confirmed_human: 'border-2 border-green-500 bg-white text-green-800',
+  review: 'bg-yellow-100 text-yellow-800',
+  rejected: 'bg-red-100 text-red-800',
+  asking: 'bg-blue-100 text-blue-800',
+}
+
+export default function BookingTable({
+  refreshKey,
+  onStatusChange,
+  showAll = false,
+}: Props) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -53,10 +75,14 @@ export default function BookingTable({
         console.error('조회 실패:', error)
       } else {
         const allBookings = data || []
-        const undecided = allBookings.filter((b: any) =>
-          ['pending', 'review', 'rejected', 'asking'].includes(b.decision)
-        )
-        setBookings(undecided)
+        if (showAll) {
+          setBookings(allBookings)
+        } else {
+          const undecided = allBookings.filter((b: any) =>
+            ['pending', 'review', 'rejected', 'asking'].includes(b.decision)
+          )
+          setBookings(undecided)
+        }
       }
       setLoading(false)
     }
@@ -131,7 +157,59 @@ export default function BookingTable({
   }
 
   if (bookings.length === 0) {
-    return <div className="text-center py-8 text-gray-500">미확정 예약이 없습니다</div>
+    return <div className="text-center py-8 text-gray-500">{showAll ? '예약이 없습니다' : '미확정 예약이 없습니다'}</div>
+  }
+
+  if (showAll) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 px-4 py-2 text-left">고객사</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">종류</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">형태</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">메모</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">날짜</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">위치</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">확정 슬롯</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bookings.map((booking) => (
+              <tr key={booking.id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">{booking.customer}</td>
+                <td className="border border-gray-300 px-4 py-2">{booking.kind}</td>
+                <td className="border border-gray-300 px-4 py-2">{booking.form}</td>
+                <td className="border border-gray-300 px-4 py-2">{booking.memo}</td>
+                <td className="border border-gray-300 px-4 py-2">{booking.date}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {booking.address ? (
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(booking.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline hover:text-blue-800"
+                    >
+                      {booking.address}
+                    </a>
+                  ) : (
+                    '-'
+                  )}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">{booking.slot_assigned || '-'}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <span className={`px-2 py-1 rounded text-sm font-semibold ${decisionColors[booking.decision] || 'bg-gray-100'}`}>
+                    {decisionDisplay[booking.decision] || booking.decision}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
   }
 
   return (

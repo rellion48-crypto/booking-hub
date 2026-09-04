@@ -1,16 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-// import { decide } from '../lib/decide'
+import { decide as decideFunc } from '../lib/decide'
 import WorkflowGraph from './WorkflowGraph'
-
-// TODO: decide 함수를 later에 통합
-const decide = (_booking: any, _allBookings: any[], _autoOn: boolean): any => ({
-  decision: 'pending',
-  reason: '판정 대기',
-  options: '',
-  candidate: '',
-  trace: [],
-})
 
 interface Booking {
   id: number
@@ -105,6 +96,18 @@ export default function Dashboard({ refreshKey }: { refreshKey: number }) {
     updateCounts(data || [])
   }
 
+  const addLog = (customer: string, decision: string, trace: string[]) => {
+    setLogs((prev) => [
+      {
+        timestamp: new Date(),
+        customer,
+        decision,
+        trace,
+      },
+      ...prev,
+    ].slice(0, 12))
+  }
+
   const updateCounts = (allBookings: Booking[]) => {
     const newCounts: NodeCounts = {
       접수: 0,
@@ -139,46 +142,44 @@ export default function Dashboard({ refreshKey }: { refreshKey: number }) {
   }
 
   const handleJudgeAll = async () => {
-    const pendingBookings = bookings.filter((b) => b.decision === 'pending')
+    const { data: allBookings, error } = await supabase.from('bookings').select('*')
+    if (error || !allBookings) {
+      console.error('조회 실패:', error)
+      return
+    }
+
+    const pendingBookings = allBookings.filter((b: any) => b.decision === 'pending')
 
     for (const booking of pendingBookings) {
-      const result = decide(booking, bookings, autoJudge)
+      try {
+        const result = decideFunc(booking, allBookings, autoJudge)
 
-      const updates: any = {
-        decision: result.decision,
-        reason: result.reason,
-        trace: result.trace.join('\n'),
+        const updates: any = {
+          decision: result.decision,
+          reason: result.reason,
+          trace: result.trace.join('\n'),
+        }
+
+        if (result.options) updates.options = result.options
+        if (result.candidate) {
+          updates.candidate = result.candidate
+          updates.slot_assigned = result.candidate
+        }
+
+        await supabase.from('bookings').update(updates).eq('id', booking.id)
+
+        addLog(booking.customer, result.decision, result.trace)
+        setLastPath({
+          from: '판정',
+          to: decisionDisplay[result.decision],
+          until: Date.now(),
+        })
+      } catch (err) {
+        console.error('판정 에러:', err, booking)
       }
-
-      if (result.options) updates.options = result.options
-      if (result.candidate) {
-        updates.candidate = result.candidate
-        updates.slot_assigned = result.candidate
-      }
-
-      await supabase.from('bookings').update(updates).eq('id', booking.id)
-
-      addLog(booking.customer, result.decision, result.trace)
-      setLastPath({
-        from: '판정',
-        to: decisionDisplay[result.decision],
-        until: Date.now(),
-      })
     }
 
     fetchBookings()
-  }
-
-  const addLog = (customer: string, decision: string, trace: string[]) => {
-    setLogs((prev) => [
-      {
-        timestamp: new Date(),
-        customer,
-        decision,
-        trace,
-      },
-      ...prev,
-    ].slice(0, 12))
   }
 
   useEffect(() => {
