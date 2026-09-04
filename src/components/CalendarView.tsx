@@ -4,10 +4,13 @@ import { supabase } from '../lib/supabase'
 interface Booking {
   id: number
   customer: string
-  service: string
+  kind: string
+  form: string
+  memo: string
   date: string
-  time: string
   address: string
+  slot_assigned?: string
+  decision: string
   status: string
   created_at: string
   email?: string
@@ -31,7 +34,9 @@ export default function CalendarView({
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true)
-      let query = supabase.from('bookings').select('*')
+      let query = supabase.from('bookings').select(
+        'id, customer, kind, form, memo, date, address, slot_assigned, decision, status, created_at, email'
+      )
 
       if (!isAdmin && userEmail) {
         query = query.eq('email', userEmail)
@@ -73,17 +78,35 @@ export default function CalendarView({
   const sortedDates = Object.keys(groupedByDate).sort()
   const displayBookings = selectedDate ? groupedByDate[selectedDate] || [] : []
 
+  const decisionColors: Record<string, string> = {
+    pending: 'bg-gray-100 text-gray-800',
+    confirmed_auto: 'bg-green-100 text-green-800',
+    confirmed_human: 'bg-green-100 text-green-800',
+    review: 'bg-yellow-100 text-yellow-800',
+    rejected: 'bg-red-100 text-red-800',
+    asking: 'bg-blue-100 text-blue-800',
+  }
+
+  const decisionDisplay: Record<string, string> = {
+    pending: '대기',
+    confirmed_auto: '확정-자동',
+    confirmed_human: '확정-수동',
+    review: '검토',
+    rejected: '거절',
+    asking: '질문',
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6">
+    <div className="bg-white border border-gray-300 rounded-lg p-6">
+      <h2 className="text-xl font-bold mb-6 text-gray-900">
         {isAdmin ? '전체 예약' : '내 예약'}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Date List */}
         <div className="lg:col-span-1">
-          <h3 className="font-bold text-gray-700 mb-3">날짜 선택</h3>
-          <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+          <h3 className="font-bold text-sm text-gray-900 mb-3">날짜 선택</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-300 rounded-lg p-3">
             {sortedDates.length === 0 ? (
               <p className="text-sm text-gray-500">예약이 없습니다</p>
             ) : (
@@ -91,15 +114,15 @@ export default function CalendarView({
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`w-full text-left p-3 rounded transition-colors ${
+                  className={`w-full text-left p-3 rounded transition-colors text-sm ${
                     selectedDate === date
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-green-600 text-white'
                       : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                   }`}
                 >
                   <div className="font-semibold">{date}</div>
-                  <div className="text-xs">
-                    {groupedByDate[date].length}개 예약
+                  <div className="text-xs opacity-80">
+                    {groupedByDate[date].length}개
                   </div>
                 </button>
               ))
@@ -111,71 +134,78 @@ export default function CalendarView({
         <div className="lg:col-span-3">
           {selectedDate && (
             <>
-              <h3 className="font-bold text-gray-700 mb-3">
+              <h3 className="font-bold text-gray-900 mb-4 text-sm">
                 {selectedDate} 예약 ({displayBookings.length}개)
               </h3>
               <div className="space-y-3">
                 {displayBookings.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">
+                  <p className="text-center py-8 text-gray-500 text-sm">
                     이 날짜의 예약이 없습니다
                   </p>
                 ) : (
                   displayBookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-300 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
                     >
-                      <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
-                          <p className="text-xs text-gray-500">고객사</p>
-                          <p className="font-semibold text-gray-800">
+                          <p className="text-xs text-gray-600">고객사</p>
+                          <p className="font-semibold text-gray-900 text-sm">
                             {booking.customer}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">서비스</p>
-                          <p className="font-semibold text-gray-800">
-                            {booking.service}
+                          <p className="text-xs text-gray-600">종류 · 형태</p>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {booking.kind} · {booking.form}
                           </p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
-                          <p className="text-xs text-gray-500">시간</p>
-                          <p className="font-semibold text-gray-800">
-                            {booking.time}
+                          <p className="text-xs text-gray-600">메모</p>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {booking.memo}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">상태</p>
+                          <p className="text-xs text-gray-600">판정</p>
                           <span
                             className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                              booking.status === 'confirmed'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                              decisionColors[booking.decision] || 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {booking.status === 'confirmed'
-                              ? '확정됨'
-                              : '대기중'}
+                            {decisionDisplay[booking.decision] || booking.decision}
                           </span>
                         </div>
                       </div>
 
-                      <div>
-                        <p className="text-xs text-gray-500">주소</p>
-                        <a
-                          href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(
-                            booking.address
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline"
-                        >
-                          {booking.address}
-                        </a>
-                      </div>
+                      {booking.slot_assigned && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-600">확정 슬롯</p>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {booking.slot_assigned}
+                          </p>
+                        </div>
+                      )}
+
+                      {booking.address && (
+                        <div>
+                          <p className="text-xs text-gray-600">위치</p>
+                          <a
+                            href={`https://www.google.com/maps/search/${encodeURIComponent(
+                              booking.address
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-800 underline text-sm"
+                          >
+                            {booking.address}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
