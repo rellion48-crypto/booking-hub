@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import WorkflowGraph from './WorkflowGraph'
 
 // TODO: decide 함수를 later에 통합
-const decide = (booking: any, allBookings: any[], autoOn: boolean): any => ({
+const decide = (_booking: any, _allBookings: any[], _autoOn: boolean): any => ({
   decision: 'pending',
   reason: '판정 대기',
   options: '',

@@ -33,16 +33,6 @@ const nodeColors: Record<string, string> = {
   질문: '#dbeafe',
 }
 
-const nodeTextColors: Record<string, string> = {
-  접수: 'black',
-  대기: 'black',
-  판정: 'black',
-  확정_자동: 'black',
-  확정_수동: 'black',
-  검토: 'black',
-  기각: 'black',
-  질문: 'black',
-}
 
 const nodeBorders: Record<string, string> = {
   접수: '#d1d5db',

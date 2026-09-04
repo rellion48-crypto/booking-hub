@@ -23,7 +23,7 @@ export function requiredSlots(kind: string, wanted: SlotType[]): SlotType[] {
   }
 
   if (kind === '지방') {
-    return SLOTS
+    return [...SLOTS]
   }
 
   return []

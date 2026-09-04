@@ -31,7 +31,6 @@ const decisionBadgeColor: Record<string, string> = {
 export default function BookingTable({
   refreshKey,
   onStatusChange,
-  isAdmin = true,
 }: {
   refreshKey: number
   onStatusChange?: () => void
@@ -79,7 +78,7 @@ export default function BookingTable({
     }
   }
 
-  const handleReviewChoice = async (bookingId: number, otherBookingId: number, chosenCustomer: string) => {
+  const handleReviewChoice = async (_bookingId: number, otherBookingId: number, chosenCustomer: string) => {
     const [chosen, other] = bookings.reduce<[Booking | null, Booking | null]>(
       ([c, o], b) => {
         if (b.customer === chosenCustomer) return [b, o]
@@ -98,15 +97,15 @@ export default function BookingTable({
     }
 
     // TODO: decide 함수 통합 후 활성화
-    const chosenDecision = { decision: 'confirmed_human', reason: '', trace: [] }
-    const otherDecision = { decision: 'pending', reason: '', trace: [] }
+    const chosenDecision: any = { decision: 'confirmed_human', reason: '', options: '', candidate: '', trace: [] }
+    const otherDecision: any = { decision: 'pending', reason: '', options: '', candidate: '', trace: [] }
 
     await Promise.all([
       supabase
         .from('bookings')
         .update({
           decision: 'confirmed_human',
-          slot_assigned: chosenDecision.candidate,
+          slot_assigned: chosenDecision.candidate || '',
           reason: chosenDecision.reason,
           trace: chosenDecision.trace.join('\n'),
         })

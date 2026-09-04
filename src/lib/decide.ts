@@ -1,4 +1,5 @@
-import { SLOTS, SlotType, NEED, requiredSlots, occupied, isAvailable } from './slots'
+import { SLOTS, NEED, requiredSlots, occupied, isAvailable } from './slots'
+import type { SlotType } from './slots'
 
 interface DecideResult {
   decision: 'asking' | 'rejected' | 'review' | 'pending' | 'confirmed_auto' | 'confirmed_human'
@@ -31,13 +32,11 @@ export function decide(booking: any, allBookings: any[], autoOn: boolean): Decid
   const wanted = booking.slots_wanted.split(',').map((s: string) => s.trim()) as SlotType[]
 
   // 2. 필요한 칸 계산
-  const required = requiredSlots(booking.kind, wanted)
   const needCount = NEED[booking.kind] || 1
   trace.push(`2 종류 ${booking.kind} -> 필요한 칸 ${needCount}개 (희망 ${wanted.join(', ')})`)
 
   // 3. 그 날짜의 점유된 칸 확인
   const occupiedSet = occupied(booking.date, allBookings)
-  const occupiedList = Array.from(occupiedSet).join(', ') || '없음'
   trace.push(
     `3 ${booking.date} 달력: ${SLOTS.map((slot) => `${slot} ${occupiedSet.has(slot) ? 'X' : 'O'}`).join(', ')}`
   )
