@@ -14,6 +14,10 @@ export default function LoginPage() {
       options: {
         redirectTo: `${window.location.origin}`,
         scopes: 'openid profile email https://www.googleapis.com/auth/calendar',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     })
 
