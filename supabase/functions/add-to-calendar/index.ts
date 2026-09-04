@@ -50,10 +50,19 @@ serve(async (req) => {
 
     // Create calendar event
     // time이 비어있으면 09:00 기본값 사용 (슬롯 모델에서는 시간 미정)
-    const eventTime = time || "09:00";
-    const startDateTime = new Date(`${date}T${eventTime}:00`).toISOString();
+    const eventTime = time && time.trim() ? time : "09:00";
+
+    // ISO 8601 형식 검증
+    if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid date format. Use YYYY-MM-DD" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const startDateTime = new Date(`${date}T${eventTime}:00+09:00`).toISOString();
     const endDateTime = new Date(
-      new Date(`${date}T${eventTime}:00`).getTime() + 60 * 60 * 1000
+      new Date(`${date}T${eventTime}:00+09:00`).getTime() + 60 * 60 * 1000
     ).toISOString();
 
     const event = {
