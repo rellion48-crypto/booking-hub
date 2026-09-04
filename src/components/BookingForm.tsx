@@ -83,20 +83,24 @@ export default function BookingForm({ onSuccess, userEmail }: BookingFormProps) 
 
         if (refreshToken && currentSession?.access_token) {
           console.log('📅 구글 캘린더에 이벤트 추가 중...')
+          const payload = {
+            refreshToken,
+            customer,
+            service: memo,
+            date,
+            time: '', // 슬롯 모델에서는 시간이 확정되지 않음
+            address,
+          }
+          console.log('📤 요청 payload:', JSON.stringify(payload, null, 2))
+          console.log('📤 date 타입:', typeof payload.date, '값:', payload.date)
+
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-calendar`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${currentSession!.access_token}`,
             },
-            body: JSON.stringify({
-              refreshToken,
-              customer,
-              service: memo,
-              date,
-              time: '', // 슬롯 모델에서는 시간이 확정되지 않음
-              address,
-            }),
+            body: JSON.stringify(payload),
           })
 
           console.log('📡 Edge Function 응답:', { status: response.status })
