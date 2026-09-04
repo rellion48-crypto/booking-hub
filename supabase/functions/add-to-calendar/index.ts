@@ -99,10 +99,16 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("Error:", errorMessage, errorStack);
+    return new Response(
+      JSON.stringify({
+        error: errorMessage,
+        stack: errorStack,
+        type: error instanceof Error ? error.constructor.name : typeof error,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 });
