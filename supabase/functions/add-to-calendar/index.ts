@@ -60,10 +60,13 @@ serve(async (req) => {
       );
     }
 
-    const startDateTime = new Date(`${date}T${eventTime}:00+09:00`).toISOString();
-    const endDateTime = new Date(
-      new Date(`${date}T${eventTime}:00+09:00`).getTime() + 60 * 60 * 1000
-    ).toISOString();
+    // UTC 기준으로 날짜 생성 (타임존 충돌 방지)
+    const [year, month, day] = date.split('-').map(Number);
+    const startDate = new Date(Date.UTC(year, month - 1, day, 9, 0, 0));
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+    const startDateTime = startDate.toISOString();
+    const endDateTime = endDate.toISOString();
 
     const event = {
       summary: `${service || "예약"} - ${customer}`,
