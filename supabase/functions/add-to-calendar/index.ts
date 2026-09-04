@@ -50,9 +50,6 @@ serve(async (req) => {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Create calendar event
-    // time이 비어있으면 09:00 기본값 사용 (슬롯 모델에서는 시간 미정)
-    const eventTime = time && time.trim() ? time : "09:00";
 
     // ISO 8601 형식 검증
     if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -62,20 +59,10 @@ serve(async (req) => {
       );
     }
 
-    // UTC 기준으로 날짜 생성 (타임존 충돌 방지)
-    console.log("🔍 date parsing:", { dateStr: date, type: typeof date });
-    const [year, month, day] = date.split('-').map(Number);
-    console.log("🔍 parsed values:", { year, month, day });
-
-    const startDate = new Date(Date.UTC(year, month - 1, day, 9, 0, 0));
-    console.log("🔍 startDate created:", { startDate: startDate.toISOString(), isValid: !isNaN(startDate.getTime()) });
-
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-    console.log("🔍 endDate created:", { endDate: endDate.toISOString(), isValid: !isNaN(endDate.getTime()) });
-
-    const startDateTime = startDate.toISOString();
-    const endDateTime = endDate.toISOString();
-    console.log("🔍 ISO strings:", { startDateTime, endDateTime });
+    // ISO 8601 형식으로 직접 생성 (09:00 기본값)
+    const startDateTime = `${date}T09:00:00+09:00`;
+    const endDateTime = `${date}T10:00:00+09:00`;
+    console.log("📅 DateTime strings:", { startDateTime, endDateTime });
 
     const event = {
       summary: `${service || "예약"} - ${customer}`,
